@@ -59,8 +59,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 #rec{position:absolute;left:50%;bottom:calc(58px + env(safe-area-inset-bottom));transform:translateX(-50%);font-size:12px;font-weight:800;letter-spacing:.06em;background:rgba(8,14,18,.6);padding:3px 10px;border-radius:9px;white-space:nowrap}
 #rec b{color:var(--acc2)}
 /* swing */
-#meter{position:absolute;right:max(14px,env(safe-area-inset-right));bottom:calc(100px + env(safe-area-inset-bottom));width:128px;height:238px;pointer-events:none}
-#strike{position:absolute;right:calc(150px + env(safe-area-inset-right));bottom:calc(110px + env(safe-area-inset-bottom));width:128px;pointer-events:none;background:rgba(8,14,18,.8);border-radius:12px;border:1px solid var(--line);padding:7px 9px}
+#meter{position:absolute;right:max(14px,env(safe-area-inset-right));bottom:calc(100px + env(safe-area-inset-bottom));width:160px;height:298px;pointer-events:none}/* v1.13.1: bigger meter, same size for swings and putts */
+#strike{position:absolute;right:calc(198px + env(safe-area-inset-right));bottom:calc(100px + env(safe-area-inset-bottom));width:128px;pointer-events:none;background:rgba(8,14,18,.8);border-radius:12px;border:1px solid var(--line);padding:7px 9px}
 #strike .st{font-size:10px;letter-spacing:.16em;font-weight:900;opacity:.8;text-align:center}
 #strike canvas{display:block;margin:3px auto 4px}
 #strike .sr{display:flex;justify-content:space-between;font-size:11px;line-height:1.5}#strike .sr span{opacity:.7;font-weight:800;letter-spacing:.08em;font-size:9.5px}#strike .sr b{font-weight:900;font-variant-numeric:tabular-nums}
@@ -163,10 +163,11 @@ td.l,th.l{text-align:left}
 #gimme b{font-size:clamp(40px,8vw,86px);font-weight:900;letter-spacing:.06em;font-style:italic;line-height:1;transform:skewX(12deg)}#gimme span{font-size:clamp(13px,1.8vw,18px);font-weight:700;opacity:.85;letter-spacing:.08em;text-transform:uppercase;transform:skewX(12deg)}
 @keyframes gin{0%{transform:translateX(-110vw) skewX(-12deg)}18%{transform:translateX(0) skewX(-12deg) scale(1.04)}26%{transform:translateX(0) skewX(-12deg) scale(1)}82%{transform:translateX(0) skewX(-12deg);opacity:1}100%{transform:translateX(110vw) skewX(-12deg);opacity:0}}
 .gnote{font-size:12px;font-weight:700;color:#ffd27a;margin-top:6px;letter-spacing:.02em}
+#putt{display:none!important}/* v1.13.1: replaced by the big meter */
 #putt .bar{overflow:visible}
 #putt .bar #pZone{position:absolute;top:-3px;bottom:-3px;width:12%;left:0;background:rgba(63,224,176,.42);border-radius:3px;box-shadow:0 0 0 1px rgba(63,224,176,.65);pointer-events:none}
 #putt .bar #pCup{position:absolute;top:-3px;bottom:-3px;width:3px;margin-left:-1px;background:#fff;border-radius:1px;z-index:1}
-.pn,#shopScr,#estScr,#casScr,#trnScr,#crScr{max-height:calc(100vh - 24px);overflow:auto;-webkit-overflow-scrolling:touch}
+.pn,#shopScr,#estScr,#casScr,#trnScr,#crScr{margin-top:2.5vh;margin-bottom:2.5vh;max-height:calc(95vh - 28px);overflow:auto;-webkit-overflow-scrolling:touch}/* v1.13.1: panel + margins now fit the screen, so the page itself never scrolls behind the panel's own scroll */
 #acts{max-height:calc(100vh - 240px);overflow-y:auto}
 #shape{flex-wrap:wrap;max-width:min(280px,calc(100vw - 160px))}
 #spinP{max-width:min(280px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto}
@@ -175,11 +176,13 @@ td.l,th.l{text-align:left}
   #putt{bottom:calc(118px + env(safe-area-inset-bottom));min-width:0;max-width:min(320px,calc(100vw - 24px));padding:4px 10px}
   #rec{bottom:calc(50px + env(safe-area-inset-bottom))}
   #shape{bottom:calc(50px + env(safe-area-inset-bottom))}
-  #meter{bottom:calc(88px + env(safe-area-inset-bottom));height:182px;width:98px}/* v1.13.1: keep the meter's 128:238 shape (it was squashed to 128x180) and clear of the shot-shape buttons */
+  #meter{bottom:calc(88px + env(safe-area-inset-bottom));height:280px;width:150px}/* v1.13.1: keeps the 128:238 shape, clear of the shot-shape buttons and the launch monitor */
   #third{bottom:calc(118px + env(safe-area-inset-bottom))}
   #intro{bottom:calc(96px + env(safe-area-inset-bottom))}
-  #strike{bottom:calc(88px + env(safe-area-inset-bottom));right:calc(120px + env(safe-area-inset-right))}/* v1.13.1: beside the meter, no longer on top of the launch monitor */
+  #strike{bottom:calc(88px + env(safe-area-inset-bottom));right:calc(188px + env(safe-area-inset-right))}/* v1.13.1: beside the meter, no longer on top of the launch monitor */
 }
+@media (max-height:680px){#meter{width:120px;height:223px;bottom:calc(80px + env(safe-area-inset-bottom))}#strike{right:calc(154px + env(safe-area-inset-right));bottom:calc(80px + env(safe-area-inset-bottom))}}
+@media (max-height:520px){#meter{width:92px;height:171px;bottom:calc(58px + env(safe-area-inset-bottom))}}
 @media (max-width:1280px) and (max-height:800px){
   #shot{padding:4px 8px}
   #lm{width:150px}
@@ -1852,7 +1855,7 @@ function updHUD(){const H=G.H;if(!H)return;const b=G.ball;const isR=G.mode==='ro
   $('sLie').innerHTML=(b.surf===S_TEE?'Tee':SURF[b.surf])+' <small>'+Math.round(LIE[b.surf]*100)+'%</small>'+(onG||b.surf===S_TEE?'':'<div class="pl">'+lieText()+'</div>');
   const w=G.wind||{mph:0,x:0,y:0};$('sWind').textContent=w.mph;const rel=Math.atan2(w.y,w.x)-G.aim;$('wArr').style.transform=`rotate(${(-rel*180/Math.PI+90).toFixed(0)}deg)`;
   const pu=G.phase==='putt';$('putt').style.display=pu?'block':'none';
-  for(const id of['meter','strike','shape','hint'])$(id).classList.toggle('hide',pu||G.phase==='intro');
+  for(const id of['meter','strike','shape','hint'])$(id).classList.toggle('hide',(pu&&(id==='strike'||id==='shape'))||G.phase==='intro');
   $('rec').innerHTML=G.rec?'Recommended: <b>'+recText()+'</b>':'';$('rec').classList.toggle('hide',pu||G.phase==='intro');
   if(pu){$('pInfo').textContent='CUP '+Math.round(d*3)+' FT · TAP TO START · TAP TO STRIKE';G.puttMax=puttMaxFor(G.ball,G.H);$('pCup').style.left=clamp(d*3/G.puttMax*100,0,100)+'%';try{if(typeof puttMeterApply==='function')puttMeterApply();else if($('pZone'))$('pZone').style.left=$('pCup').style.left}catch(e){}}
   fillLM()}
@@ -1863,7 +1866,26 @@ function updClubs(){const b=G.ball;const el=$('clubs');const allowed=G.allowed||
     return`<button data-c="${ci}" class="${ci===G.club?'sel':''} ${G.rec&&ci===G.rec.ci?'rec':''}">${CN[ci]}<small>${sm}</small></button>`}).join('');G.ringDirty=true}
 function scoreToPar(){const r=G.round;if(!r)return 0;let s=0;for(let i=0;i<r.sc.length;i++)if(r.sc[i])s+=r.sc[i]-cpar(CID[r.cid],r.tee)[r.start+i];return s}
 // ---------- meter drawing ----------
-function drawMeter(){const c=$('meter');if(c.classList.contains('hide'))return;const g=c.getContext('2d'),W=c.width,H=c.height;g.clearRect(0,0,W,H);
+function drawPuttMeter(c){/* v1.13.1: the putt meter is the same big meter as the swing (same element, size and position), showing pace instead of power */
+  const g=c.getContext('2d'),W=c.width,H=c.height;g.clearRect(0,0,W,H);
+  const lo=-.22,hi=1.15,cx=W*.98,cy=H*.5,R=H*.44,a0=Math.PI*.62,a1=Math.PI*1.38;
+  const ang=v=>lerp(a1,a0,(clamp(v,lo,hi)-lo)/(hi-lo));
+  const arc=(v0,v1,col,w)=>{g.strokeStyle=col;g.lineWidth=w;g.beginPath();g.arc(cx,cy,R,ang(v1),ang(v0));g.stroke()};
+  const tick=(v,col,len,w)=>{const a=ang(v);g.strokeStyle=col;g.lineWidth=w;g.beginPath();g.moveTo(cx+Math.cos(a)*(R-len),cy+Math.sin(a)*(R-len));g.lineTo(cx+Math.cos(a)*(R+len),cy+Math.sin(a)*(R+len));g.stroke()};
+  const max=G.puttMax||1,pace=(typeof puttPaceUpdate==='function'?puttPaceUpdate():G.puttPace),b=G.ball,H0=G.H;const d=b&&H0&&H0.cup?Math.hypot(H0.cup.x-b.x,H0.cup.y-b.y)*3:0;
+  g.lineCap='butt';arc(0,1,'rgba(6,10,12,.78)',34);arc(0,1,'rgba(255,255,255,.10)',20);
+  if(pace){const zl=clamp(Math.min(pace.ftLo,pace.ftHi)/max,0,1),zh=clamp(Math.max(pace.ftLo,pace.ftHi)/max,0,1);arc(zl,Math.max(zh,zl+.02),'rgba(63,224,176,.9)',20);tick(clamp(pace.ft/max,0,1),'#3fe0b0',22,6)}
+  tick(clamp(d/max,0,1),'#fff',24,5);
+  for(let v=.25;v<1.01;v+=.25)tick(v,'rgba(255,255,255,.5)',12,2);
+  const s=G.sw,ft=s&&s.putt?s.ft:0,f=clamp(ft/max,0,1);
+  if(s&&s.putt){const gr=g.createLinearGradient(0,H,0,0);gr.addColorStop(0,'#3fe0b0');gr.addColorStop(.75,'#ffd24a');gr.addColorStop(1,'#ff6a4a');g.lineCap='round';g.strokeStyle=gr;g.lineWidth=12;g.beginPath();g.arc(cx,cy,R,ang(f),ang(.001));g.stroke();
+    g.fillStyle='#fff';g.beginPath();g.arc(cx+Math.cos(ang(f))*R,cy+Math.sin(ang(f))*R,13,0,TAU);g.fill();g.strokeStyle='#000';g.lineWidth=3;g.stroke()}
+  g.fillStyle='#fff';g.font='900 46px Helvetica,Arial,sans-serif';g.textAlign='right';g.textBaseline='alphabetic';g.fillText(s&&s.putt?ft.toFixed(ft<10?1:0)+' ft':'0 ft',W*.99,H*.99);
+  g.font='900 19px Helvetica,Arial,sans-serif';g.textAlign='left';g.fillStyle='rgba(255,255,255,.9)';g.fillText('PUTT · CUP '+Math.round(d)+' FT',8,H*.1);
+  g.fillStyle='#3fe0b0';g.fillText('PACE',8,H*.86);g.fillText('ZONE',8,H*.86+21);
+  const ph=$('hintT');if(ph){const t=!s?'TAP TO START THE PUTT':'TAP TO STRIKE';if(ph.textContent!==t)ph.textContent=t}
+  const hs=$('hintS');if(hs){const t=pace?'Pace '+pace.ft.toFixed(pace.ft<10?1:0)+' ft · cup '+Math.round(d)+' ft · drag sideways to aim':'drag sideways to aim';if(hs.textContent!==t)hs.textContent=t}}
+function drawMeter(){const c=$('meter');if(c.classList.contains('hide'))return;if(G.phase==='putt'||(G.sw&&G.sw.putt)){drawPuttMeter(c);return}const g=c.getContext('2d'),W=c.width,H=c.height;g.clearRect(0,0,W,H);
   const lo=-.22,hi=1.15,cx=W*.98,cy=H*.5,R=H*.44,a0=Math.PI*.62,a1=Math.PI*1.38;
   const ang=v=>lerp(a1,a0,(clamp(v,lo,hi)-lo)/(hi-lo));// bottom = low values
   const arc=(v0,v1,col,w)=>{g.strokeStyle=col;g.lineWidth=w;g.beginPath();g.arc(cx,cy,R,ang(v1),ang(v0));g.stroke()};
@@ -1881,6 +1903,7 @@ function drawMeter(){const c=$('meter');if(c.classList.contains('hide'))return;c
   g.font='900 19px Helvetica,Arial,sans-serif';g.textAlign='left';g.fillStyle='rgba(255,255,255,.9)';
   g.fillText(chip?'CHIP · FULL '+G.chip.max+' YD':'POWER',8,H*.1);g.fillStyle='#3fe0b0';g.fillText('SWEET',8,H*.86);g.fillText('SPOT',8,H*.86+21);
   const ph=$('hintT');if(ph){const t=!s?'TAP, CLICK OR PRESS SPACE TO SWING':s.phase==='up'?'TAP TO SET POWER':'TAP ON THE WHITE LINE';if(ph.textContent!==t)ph.textContent=t}
+  {const hs=$('hintS');const t='Tap 2 sets power · tap 3 on the white line · drag sideways to aim';if(hs&&hs.textContent!==t)hs.textContent=t}
   // strike panel
   const sc=$('strikeC'),q=sc.getContext('2d');const w=200,h=140;q.clearRect(0,0,w,h);
   const wood=G.club<4;q.fillStyle=wood?'#2b3238':'#9aa3aa';q.strokeStyle='rgba(255,255,255,.85)';q.lineWidth=3;
@@ -3322,7 +3345,7 @@ function lcLayout(){if(innerWidth<900)return;const a=$('acts'),sh=$('shot');if(!
   const at=a.offsetHeight&&[...a.children].some(c=>c.style.display!=='none')?a.getBoundingClientRect().top:sr.top;const lv=$('tnLive'),ch=$('crGearI');const vis=e=>e&&e.style.display!=='none'&&e.offsetParent!==null;
   if(vis(lv)&&vis(ch)){const top=lv.getBoundingClientRect().top;const lr=lv.getBoundingClientRect();ch.style.top=Math.round(lr.bottom+8)+'px';const room=at-8-top-ch.offsetHeight-8;lv.style.maxHeight=Math.max(60,Math.floor(room))+'px'}
   else if(vis(lv)){const top=lv.getBoundingClientRect().top;lv.style.maxHeight=Math.max(60,Math.floor(at-8-top))+'px'}}
-setInterval(()=>{try{lcLayout()}catch(e){}},300);addEventListener('resize',()=>{try{lcLayout()}catch(e){}});
+setInterval(()=>{try{lcLayout()}catch(e){}},120);addEventListener('resize',()=>{try{lcLayout()}catch(e){}});
 
 /* v4.7: assisted rounds (putt line used) don't touch records or trophies */
 {const _f=finishRound;finishRound=function(){const r=G.round;if(!(r&&r.assisted&&!r.car))return _f.apply(this,arguments);const a=store('ts.rec'),t=store('ts.trophies');const out=_f.apply(this,arguments);store('ts.rec',a);store('ts.trophies',t);try{toast('Assisted round','Not counted toward records (putt line used)',3000)}catch(e){}return out}}
@@ -4817,7 +4840,8 @@ function tsFitMenus(){
   const short=h<=760, mid=h<=800, narr=w<=1280;
   const acts=$('acts'), putt=$('putt'), rec=$('rec'), shape=$('shape'), meter=$('meter'), strike=$('strike'), spin=$('spinP'), shot=$('shot');
   if(acts){acts.style.maxHeight=Math.max(80,h- (short?210:260))+'px';acts.style.overflowY='auto';
-    if(short)acts.style.bottom='calc(132px + env(safe-area-inset-bottom))';
+    if(w>=900){/* desktop: lcLayout() stacks the buttons above the shot panel (v1.13.1: the two used to fight and overlap at 720p) */}
+    else if(short)acts.style.bottom='calc(132px + env(safe-area-inset-bottom))';
     else acts.style.bottom='';}
   if(putt&&short)putt.style.bottom='calc(118px + env(safe-area-inset-bottom))';
   else if(putt)putt.style.bottom='';
@@ -4825,12 +4849,11 @@ function tsFitMenus(){
   else if(rec)rec.style.bottom='';
   if(shape){if(short)shape.style.bottom='calc(50px + env(safe-area-inset-bottom))';else shape.style.bottom='';
     shape.style.maxWidth=Math.max(120,w- (meter&&meter.offsetParent?160:20))+'px';shape.style.flexWrap='wrap'}
-  if(meter&&short){meter.style.height='180px';meter.style.bottom='calc(70px + env(safe-area-inset-bottom))'}
-  else if(meter){meter.style.height='';meter.style.bottom=''}
-  if(strike&&(short||narr)){strike.style.right='max(8px, env(safe-area-inset-right))';strike.style.bottom=short?'calc(250px + env(safe-area-inset-bottom))':'calc(110px + env(safe-area-inset-bottom))'}
+  if(meter){meter.style.height='';meter.style.bottom=''}/* v1.13.1: sized by CSS only, so swing and putt meters never resize */
+  if(strike&&(w<=640||h<=520)){strike.style.right='max(8px, env(safe-area-inset-right))';strike.style.bottom=h<=520?'calc(190px + env(safe-area-inset-bottom))':'calc(110px + env(safe-area-inset-bottom))'}
   else if(strike){strike.style.right='';strike.style.bottom=''}
   if(spin){const r=spin.getBoundingClientRect();if(spin.style.display!=='none'&&r.width){let l=r.left,t=r.top;if(l+r.width>w-8)spin.style.left=(w-r.width-8)+'px';if(t+r.height>h-8)spin.style.top=Math.max(8,h-r.height-8)+'px';if(parseFloat(spin.style.left)<8)spin.style.left='8px'}}
-  document.querySelectorAll('.pn,.screen .pn,#shopScr,#estScr,#casScr,#trnScr').forEach(p=>{p.style.maxHeight='calc(100vh - 24px)';p.style.overflow='auto'});
+  document.querySelectorAll('.pn,.screen .pn,#shopScr,#estScr,#casScr,#trnScr').forEach(p=>{p.style.maxHeight='calc(95vh - 28px)';p.style.overflow='auto'});
 }
 addEventListener('resize',()=>{try{tsFitMenus()}catch(e){}});
 setInterval(()=>{try{tsFitMenus()}catch(e){}},700);
