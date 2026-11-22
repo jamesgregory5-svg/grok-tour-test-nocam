@@ -250,7 +250,7 @@ html,body,button,input,select,textarea{font-family:Outfit,"Helvetica Neue",syste
 <div id="ldr" style="position:fixed;inset:0;z-index:9999;background:#0b1014;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#e8eef2;font:700 28px/1 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.18em;transition:opacity .6s ease"><div>LOADING</div><div style="width:min(420px,70vw)"><div style="height:10px;background:#1a2430;border-radius:999px;overflow:hidden;border:1px solid #2a3a44"><div id="ldrBar" style="height:100%;width:0%;background:linear-gradient(90deg,#3fe0b0,#7cf0d0);border-radius:999px;box-sizing:border-box;transition:none"></div></div><div id="ldrPct" style="margin-top:8px;text-align:center;font:800 14px/1.2 system-ui,sans-serif;letter-spacing:.12em;opacity:.85">0%</div></div></div><div id="fps"></div><div id="gimme"><div class="gb"><b>GIMME</b><span id="gimmeS"></span></div></div>
 <script type="text/x-tour" id="gsrc">
 'use strict';
-const VERSION='v1.14.3';
+const VERSION='v1.14.4';
 const TAU=Math.PI*2,DEG=Math.PI/180;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,smooth=t=>t*t*(3-2*t);
 const pad=n=>String(n).padStart(2,'0');
@@ -813,6 +813,11 @@ const WAT=(F.wa||[]).concat(sea,F.sd||[],course.id==='lacc'?(F.bk||[]):[]);/* v1
       if(dPlay(mx,my)<10)continue;const P=side(-1).reverse().concat([[mx,my]],side(1));if(P.length<Math.min(16,sp+6))continue;
       let bb=[1e9,1e9,-1e9,-1e9];for(const p of P){bb=[Math.min(bb[0],p[0]),Math.min(bb[1],p[1]),Math.max(bb[2],p[0]),Math.max(bb[3],p[1])]}
       CRK.push({P,w:1.05,bb,seed:Math.round(sp*10)});BRK.push(L)}if(!{lookaway:1,augusta:1}[course.id])F.br=BRK}
+  if(course.id==='augusta'){/* v1.14.4: tag Hogan (12th green) and Nelson (13th tee) by world midpoint; add the unmapped Sarazen dam walkway left of the 15th pond */
+    const _hm=[18.8,-580.2],_nm=[-90.8,-598.5];
+    for(const L of F.br||[]){const a=L[0],b=L[L.length-1],w=toRaw((a[0]+b[0])/2,(a[1]+b[1])/2);
+      if(Math.hypot(w[0]-_hm[0],w[1]-_hm[1])<12)L.rae='hogan';else if(Math.hypot(w[0]-_nm[0],w[1]-_nm[1])<12)L.rae='nelson'}
+    const _s=[[-280,-121],[-282.8,-103.5]].map(tf);if(inR(_s)){_s.rae='sarazen';F.br.push(_s)}}
   const crkD=(x,y,m)=>{let d=1e9,f=0;for(const c of CRK){if(x<c.bb[0]-m||x>c.bb[2]+m||y<c.bb[1]-m||y>c.bb[3]+m)continue;const P=c.P;for(let k=0;k<P.length-1;k++){const a=P[k],b=P[k+1],dx=b[0]-a[0],dy=b[1]-a[1],l2=dx*dx+dy*dy||1;let t=((x-a[0])*dx+(y-a[1])*dy)/l2;t=t<0?0:t>1?1:t;const e=Math.hypot(x-a[0]-dx*t,y-a[1]-dy*t);if(e<d){d=e;f=Math.min(k+t,P.length-1-k-t)}}}return[d,f]};// distance to the nearest creek + distance (yd) from its nearer end
   // v1.15: Augusta 8 has grass mounds (no bunkers) short-left of and around the green; the 10 m DEM can't resolve them
   const MND=course.id==='augusta'&&hi===7?(()=>{const R2=RNG('mnd8'),o=[];for(let n=0;n<7;n++)o.push([gcx+R2.range(-34,-13),gcy+R2.range(-42,6),R2.range(1.1,2.1),R2.range(4.5,7.5)]);o.push([gcx+R2.range(14,20),gcy+R2.range(-30,-14),1.3,5.5]);return o})():null;
@@ -1401,9 +1406,60 @@ function bldBuild(R,H){const G2={};const grp=(k,c)=>G2[k]||(G2[k]={c,P:[],N:[],I
     for(let j=0;j<E.length;j++)tri(rf,E[j],E[(j+1)%E.length],ap)}
   const deckC=cid==='augusta'?[.66,.63,.58]:[.5,.43,.35];const dk=grp('d',deckC);
   const rl=grp('rl',[.36,.3,.24]);const inBx=(x,y)=>x>H.X0+1&&x<H.X1-1&&y>H.Y0+1&&y<H.Y1-1;
+  const zg=(x,y)=>{const x2=Math.min(H.X1-1.5,Math.max(H.X0+1.5,x)),y2=Math.min(H.Y1-1.5,Math.max(H.Y0+1.5,y));let z=H.hAt(x2,y2);if(H.surfAt(x2,y2)===7&&H.seaZ>-900)z=Math.max(z,H.seaZ);return z};
+  const lineOf=(L0,ext)=>{const L=L0.map(p=>[p[0],p[1]]);if(L.length<2)return L;const a=L[0],b=L[1],l=Math.hypot(b[0]-a[0],b[1]-a[1])||1;L[0]=[a[0]-(b[0]-a[0])/l*ext,a[1]-(b[1]-a[1])/l*ext];const c=L[L.length-1],d=L[L.length-2],m=Math.hypot(c[0]-d[0],c[1]-d[1])||1;L[L.length-1]=[c[0]+(c[0]-d[0])/m*ext,c[1]+(c[1]-d[1])/m*ext];return L};
+  /* v1.14.4 Rae's Creek: pale fieldstone, gentle turf-decked arch, three openings, low parapets (Hogan / Nelson); flat flagstone dam walkway, no turf (Sarazen). Visual only. */
+  const addRaeArch=L0=>{
+    const st=grp('st',[.78,.74,.66]),sd=grp('sd',[.58,.53,.46]),tf=grp('tf',[.33,.51,.27]),cb=grp('cb',[.84,.80,.72]);
+    const L=lineOf(L0,.8),A=L[0],B=L[L.length-1],T=Math.hypot(B[0]-A[0],B[1]-A[1])||1;
+    const ux=(B[0]-A[0])/T,uy=(B[1]-A[1])/T,nx=-uy,ny=ux;
+    const zA=zg(A[0],A[1]),zB=zg(B[0],B[1]);let zLo=1e9;for(let s=0;s<=T;s+=.45)zLo=Math.min(zLo,zg(A[0]+ux*s,A[1]+uy*s));
+    const lift=.78,zDk=t=>zA+(zB-zA)*t+.08+lift*Math.sin(Math.PI*t);
+    const zFloor=Math.min(zLo,Math.min(zA,zB)-.35,zDk(.5)-2.1);
+    const hw=1.5,ph=.82,pt=.22,o=hw+.05,ii=hw-pt,N=Math.max(28,Math.ceil(T/.32));
+    const ptAt=(t,s,z)=>[A[0]+ux*(t*T)+nx*s,A[1]+uy*(t*T)+ny*s,z];
+    const archAt=t=>{const spans=[[.28,.09,.82],[.5,.13,1],[.72,.09,.82]];let z=null,zd=zDk(t);for(const [c,w,r] of spans){const u=(t-c)/w;if(Math.abs(u)>=1)continue;const avail=Math.max(1.55,zd-zFloor-.35);const top=zFloor+.04+avail*r*Math.sqrt(Math.max(0,1-u*u));if(z==null||top>z)z=Math.min(top,zd-.3)}return z};
+    for(let i=0;i<N;i++){
+      const t0=i/N,t1=(i+1)/N,za=zDk(t0),zb=zDk(t1);
+      quad(tf,ptAt(t0,ii,za),ptAt(t0,-ii,za),ptAt(t1,-ii,zb),ptAt(t1,ii,zb),[0,0,1]);
+      for(const s of[1,-1]){const n=[nx*s,ny*s,0];
+        quad(st,ptAt(t0,s*o,za),ptAt(t1,s*o,zb),ptAt(t1,s*o,zb+ph),ptAt(t0,s*o,za+ph),n);
+        quad(st,ptAt(t0,s*ii,za),ptAt(t0,s*ii,za+ph),ptAt(t1,s*ii,zb+ph),ptAt(t1,s*ii,zb),[-n[0],-n[1],0]);
+        quad(cb,ptAt(t0,s*(o+.04),za+ph),ptAt(t1,s*(o+.04),zb+ph),ptAt(t1,s*(ii-.04),zb+ph),ptAt(t0,s*(ii-.04),za+ph),[0,0,1]);
+        const az0=archAt(t0),az1=archAt(t1);
+        const foot0=Math.min(zg(A[0]+ux*t0*T+nx*s*o,A[1]+uy*t0*T+ny*s*o),zFloor,za-.25);
+        const foot1=Math.min(zg(A[0]+ux*t1*T+nx*s*o,A[1]+uy*t1*T+ny*s*o),zFloor,zb-.25);
+        if(az0==null||az1==null){if(az0==null&&az1==null)quad(st,ptAt(t0,s*o,foot0),ptAt(t1,s*o,foot1),ptAt(t1,s*o,za),ptAt(t0,s*o,za),n)}
+        else{quad(st,ptAt(t0,s*o,az0),ptAt(t1,s*o,az1),ptAt(t1,s*o,za),ptAt(t0,s*o,za),n);if(s===1)quad(sd,ptAt(t0,o,az0),ptAt(t0,-o,az0),ptAt(t1,-o,az1),ptAt(t1,o,az1),[0,0,-1])}
+        if((az0==null)!==(az1==null)){const tJ=az0!=null?t0:t1,zOpen=az0!=null?az0:az1,fn=az0!=null?[-ux,-uy,0]:[ux,uy,0];const fL=Math.min(zg(A[0]+ux*tJ*T+nx*o,A[1]+uy*tJ*T+ny*o),zOpen-.1),fR=Math.min(zg(A[0]+ux*tJ*T-nx*o,A[1]+uy*tJ*T-ny*o),zOpen-.1);if(s===1)quad(st,ptAt(tJ,o,fL),ptAt(tJ,-o,fR),ptAt(tJ,-o,zOpen),ptAt(tJ,o,zOpen),fn)}}
+    }
+    for(const t of[0,1]){const z=zDk(t),n=t===0?[-ux,-uy,0]:[ux,uy,0];const fL=Math.min(zg(A[0]+ux*t*T+nx*o,A[1]+uy*t*T+ny*o),z-.2),fR=Math.min(zg(A[0]+ux*t*T-nx*o,A[1]+uy*t*T-ny*o),z-.2);quad(st,ptAt(t,o,fL),ptAt(t,-o,fR),ptAt(t,-o,z+ph),ptAt(t,o,z+ph),n)}
+  };
+  const addRaeFlat=L0=>{
+    const st=grp('st',[.78,.74,.66]),sd=grp('sd',[.58,.53,.46]),cb=grp('cb',[.84,.80,.72]);
+    const L=lineOf(L0,.5),A=L[0],B=L[L.length-1],T=Math.hypot(B[0]-A[0],B[1]-A[1])||1;
+    const ux=(B[0]-A[0])/T,uy=(B[1]-A[1])/T,nx=-uy,ny=ux;
+    const hw=1.3,ch=.4,N=Math.max(14,Math.ceil(T/.45));
+    const ptAt=(t,s,z)=>[A[0]+ux*(t*T)+nx*s,A[1]+uy*(t*T)+ny*s,z];
+    const zDk=t=>{const x=A[0]+ux*t*T,y=A[1]+uy*t*T;return Math.max(zg(x,y),zg(x+nx*hw,y+ny*hw),zg(x-nx*hw,y-ny*hw))+.14};
+    for(let i=0;i<N;i++){
+      const t0=i/N,t1=(i+1)/N,za=zDk(t0),zb=zDk(t1);
+      const g=i%3===2?sd:st;
+      quad(g,ptAt(t0,hw-.16,za),ptAt(t0,-(hw-.16),za),ptAt(t1,-(hw-.16),zb),ptAt(t1,hw-.16,zb),[0,0,1]);
+      if(i%3===2){const tm=(t0+t1)/2,zm=zDk(tm);quad(sd,ptAt(t0,hw-.16,za+.005),ptAt(t0,-(hw-.16),za+.005),ptAt(tm,-(hw-.16),zm+.005),ptAt(tm,hw-.16,zm+.005),[0,0,1])}
+      for(const s of[1,-1]){const n=[nx*s,ny*s,0],o=hw+.02,ii=hw-.16;
+        quad(cb,ptAt(t0,s*o,za),ptAt(t1,s*o,zb),ptAt(t1,s*o,zb+ch),ptAt(t0,s*o,za+ch),n);
+        quad(cb,ptAt(t0,s*ii,za),ptAt(t0,s*ii,za+ch),ptAt(t1,s*ii,zb+ch),ptAt(t1,s*ii,zb),[-n[0],-n[1],0]);
+        quad(cb,ptAt(t0,s*(o+.03),za+ch),ptAt(t1,s*(o+.03),zb+ch),ptAt(t1,s*(ii-.02),zb+ch),ptAt(t0,s*(ii-.02),za+ch),[0,0,1]);
+        const foot0=Math.min(zg(A[0]+ux*t0*T+nx*s*o,A[1]+uy*t0*T+ny*s*o),za-.12);
+        const foot1=Math.min(zg(A[0]+ux*t1*T+nx*s*o,A[1]+uy*t1*T+ny*s*o),zb-.12);
+        if(za-foot0>.35||zb-foot1>.35)quad(st,ptAt(t0,s*o,foot0),ptAt(t1,s*o,foot1),ptAt(t1,s*o,za),ptAt(t0,s*o,za),n)}
+    }
+    for(const t of[0,1]){const z=zDk(t),n=t===0?[-ux,-uy,0]:[ux,uy,0];const fL=Math.min(zg(A[0]+ux*t*T+nx*hw,A[1]+uy*t*T+ny*hw),z-.1),fR=Math.min(zg(A[0]+ux*t*T-nx*hw,A[1]+uy*t*T-ny*hw),z-.1);quad(st,ptAt(t,hw,fL),ptAt(t,-hw,fR),ptAt(t,-hw,z+ch),ptAt(t,hw,z+ch),n)}
+  };
   for(const L0 of(H.F&&H.F.br)||[]){if(L0.length<2)continue;if(!L0.some(p=>inBx(p[0],p[1])))continue;// v1.15: cart-path bridges (OSM bridge=yes): deck ramps between the two banks, clears the water/ground under it, open rails on posts
+    if(L0.rae==='hogan'||L0.rae==='nelson'){addRaeArch(L0);continue}if(L0.rae==='sarazen'){addRaeFlat(L0);continue}
     const L=L0.map(p=>[p[0],p[1]]);{const a=L[0],b=L[1],l=Math.hypot(b[0]-a[0],b[1]-a[1])||1;L[0]=[a[0]-(b[0]-a[0])/l*1.2,a[1]-(b[1]-a[1])/l*1.2];const c=L[L.length-1],d=L[L.length-2],m=Math.hypot(c[0]-d[0],c[1]-d[1])||1;L[L.length-1]=[c[0]+(c[0]-d[0])/m*1.2,c[1]+(c[1]-d[1])/m*1.2]}
-    const zg=(x,y)=>{const x2=Math.min(H.X1-1.5,Math.max(H.X0+1.5,x)),y2=Math.min(H.Y1-1.5,Math.max(H.Y0+1.5,y));let z=H.hAt(x2,y2);if(H.surfAt(x2,y2)===7&&H.seaZ>-900)z=Math.max(z,H.seaZ);return z};
     const cum=[0];for(let j=1;j<L.length;j++)cum.push(cum[j-1]+Math.hypot(L[j][0]-L[j-1][0],L[j][1]-L[j-1][1]));const T=cum[cum.length-1]||1;
     const zA=zg(L[0][0],L[0][1]),zB=zg(L[L.length-1][0],L[L.length-1][1]);
     let lift=0;for(let j=0;j<L.length-1;j++){const p=L[j],q=L[j+1],sl=Math.hypot(q[0]-p[0],q[1]-p[1]);for(let s=0;s<=sl;s+=.5){const f=sl?s/sl:0,x=p[0]+(q[0]-p[0])*f,y=p[1]+(q[1]-p[1])*f,t=(cum[j]+s)/T,arch=Math.sin(Math.PI*t);const zl=zA+(zB-zA)*t;if(t>.15&&t<.85)lift=Math.max(lift,(zg(x,y)+.4-zl)/arch)}}lift=Math.min(1.4,Math.max(.18,lift));
@@ -1416,7 +1472,7 @@ function bldBuild(R,H){const G2={};const grp=(k,c)=>G2[k]||(G2[k]={c,P:[],N:[],I
           quad(dk,[ax,ay,za-.32],[bx,by,zb-.32],[bx,by,za===zb?zb:zb],[ax,ay,za],n);// fascia beam
           quad(rl,[ax,ay,za+.62],[bx,by,zb+.62],[bx,by,zb+.72],[ax,ay,za+.72],n);// top rail
           const pw=.07,px=ax-ux*pw,py=ay-uy*pw,qx=ax+ux*pw,qy=ay+uy*pw;quad(rl,[px,py,za],[qx,qy,za],[qx,qy,za+.72],[px,py,za+.72],n);quad(rl,[px,py,za],[px,py,za+.72],[px-nx*.06*s,py-ny*.06*s,za+.72],[px-nx*.06*s,py-ny*.06*s,za],[-ux,-uy,0])}}}}
-  R.bld=[];for(const k in G2){const g=G2[k];if(!g.I.length)continue;R.bld.push({c:g.c,keep:1,kind:k==='d'||k==='rl'?'bridge':'building',m:R.vao([{loc:0,n:3,d:new Float32Array(g.P)},{loc:1,n:3,d:new Float32Array(g.N)}],new Uint32Array(g.I))})}R.bldFor=H}
+  R.bld=[];for(const k in G2){const g=G2[k];if(!g.I.length)continue;R.bld.push({c:g.c,keep:1,kind:(k==='d'||k==='rl'||k==='st'||k==='sd'||k==='tf'||k==='cb')?'bridge':'building',m:R.vao([{loc:0,n:3,d:new Float32Array(g.P)},{loc:1,n:3,d:new Float32Array(g.N)}],new Uint32Array(g.I))})}R.bldFor=H}
 
 'use strict';
 /* ---------- 3D trees (v1.14) ----------
