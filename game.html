@@ -250,7 +250,7 @@ html,body,button,input,select,textarea{font-family:Outfit,"Helvetica Neue",syste
 <div id="ldr" style="position:fixed;inset:0;z-index:9999;background:#0b1014;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#e8eef2;font:700 28px/1 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.18em;transition:opacity .6s ease"><div>LOADING</div><div style="width:min(420px,70vw)"><div style="height:10px;background:#1a2430;border-radius:999px;overflow:hidden;border:1px solid #2a3a44"><div id="ldrBar" style="height:100%;width:0%;background:linear-gradient(90deg,#3fe0b0,#7cf0d0);border-radius:999px;box-sizing:border-box;transition:none"></div></div><div id="ldrPct" style="margin-top:8px;text-align:center;font:800 14px/1.2 system-ui,sans-serif;letter-spacing:.12em;opacity:.85">0%</div></div></div><div id="fps"></div><div id="gimme"><div class="gb"><b>GIMME</b><span id="gimmeS"></span></div></div>
 <script type="text/x-tour" id="gsrc">
 'use strict';
-const VERSION='v1.14.1-hotfix';
+const VERSION='v1.14.2';
 const TAU=Math.PI*2,DEG=Math.PI/180;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,smooth=t=>t*t*(3-2*t);
 const pad=n=>String(n).padStart(2,'0');
@@ -1599,8 +1599,32 @@ function recSave(r){store('ts.rec',r)}
 function crec(r,cid){return r.courses[cid]=r.courses[cid]||{rounds:[],aces:0,ld:0}}
 // ---------- simulation helpers ----------
 const SIMBUF={s:new Float32Array(4000)},SIMREC=new Float32Array(6000);
-function simShot(ci,power,surf,wind,shape,traj,dir,x,y){const sh=SHAPES[shape];const L=launchFrom(ci,{power,face:sh.f,path:sh.p,dLoft:traj*4},surf);const F=flyBall(L,x,y,dir,wind,SIMBUF);return{L,F}}
-function clubCarry(ci,power,surf,wind,dir){const k=ci+'|'+power.toFixed(2)+'|'+surf+'|'+wind.x.toFixed(1)+'|'+wind.y.toFixed(1)+'|'+dir.toFixed(2);if(carryCache[k])return carryCache[k];
+function playerShotActive(){try{return !!((G.round&&G.round.car)||G.crCh)}catch(e){return false}}
+function playerPowScale(ci){
+  if(!playerShotActive()||ci===PUTTER)return 1;
+  let s=1;
+  try{
+    const C=typeof crLoad==='function'?crLoad():null;
+    if(C&&typeof crStats==='function'){if(typeof crGear==='function')crGear(C);const z=crStats(C,ci);s*=1+GEAR_POW*Math.min(10,Math.max(0,z.pow||0))}
+    if(typeof crBuild==='function'){const b=crBuild();if(b==='pow')s*=1.05;else if(b==='acc')s*=.97}
+  }catch(e){}
+  return s}
+function playerLaunchIn(ci,inp){
+  inp=Object.assign({},inp);
+  try{
+    if(playerShotActive()&&ci!==PUTTER){
+      const C=typeof crLoad==='function'?crLoad():null;
+      if(C&&typeof crStats==='function'){const z=crStats(C,ci);inp.dLoft=(inp.dLoft||0)+(z.launch||0)*.15}
+    }
+  }catch(e){}
+  return inp}
+function simShot(ci,power,surf,wind,shape,traj,dir,x,y){
+  const sh=SHAPES[shape]||SHAPES[0];
+  let inp={power:power,face:sh.f,path:sh.p,dLoft:traj*4};
+  if(typeof playerPowScale==='function')inp.power=power*playerPowScale(ci);
+  if(typeof playerLaunchIn==='function')inp=playerLaunchIn(ci,inp);
+  const L=launchFrom(ci,inp,surf);const F=flyBall(L,x,y,dir,wind,SIMBUF);return{L,F}}
+function clubCarry(ci,power,surf,wind,dir){const sc=typeof playerPowScale==='function'?playerPowScale(ci):1;const k=ci+'|'+power.toFixed(2)+'|'+surf+'|'+wind.x.toFixed(1)+'|'+wind.y.toFixed(1)+'|'+dir.toFixed(2)+'|'+sc.toFixed(4);if(carryCache[k])return carryCache[k];
   const r=simShot(ci,power,surf,wind,0,0,dir,0,0);const F=r.F;const along=F.lx*Math.cos(dir)+F.ly*Math.sin(dir);const g=Math.max(.04,Math.min(1,1-(F.desc-25)/28))*(1-Math.min(.6,F.wb/RPM/20000));
   const rr=groundRoll(Object.assign({},F),()=>S_FW,()=>({x:0,y:0}),null,null);const roll=Math.hypot(rr.x-F.lx,rr.y-F.ly);return carryCache[k]={carry:along,total:along+roll,F}}
 function windFor(seed){const R=RNG('w'+seed);const sp=R()<.15?R.range(0,2):R.range(2,R()<.25?16:11);const a=R()*TAU;return{x:Math.cos(a)*sp*MPS,y:Math.sin(a)*sp*MPS,mph:Math.round(sp),a}}
@@ -2462,7 +2486,7 @@ function chipSetup(){G.chip=null;if(!chipCandidate()||!G.rec||G.rec.ci===PUTTER)
   if(G.rec.ci>=8){G.rec.pwPhys=chipPhys(G.rec.ci,d);G.rec.pw=clamp(Math.round(d/G.chip.max*100)/100,.05,1.1)}}
 function chipMeterPw(){return G.rec&&G.rec.ci>=8?G.rec.pw:clamp(G.chip.d/G.chip.max,.05,1.1)}
 const _recommendC=recommend;recommend=function(){_recommendC.apply(this,arguments);try{chipSetup()}catch(e){G.chip=null}};
-const _executeShotC=executeShot;executeShot=function(inp){if(inp&&chipOn()&&Number.isFinite(inp.power)){inp=Object.assign({},inp);const yd=clamp(inp.power,0,1.15)*G.chip.max;inp.power=Math.max(.02,chipPhys(G.club,yd));inp.chipYds=yd}return _executeShotC(inp)};
+const _executeShotC=executeShot;executeShot=function(inp){if(inp&&chipOn()&&Number.isFinite(inp.power)&&!inp.chipYds){inp=Object.assign({},inp);const yd=clamp(inp.power,0,1.15)*G.chip.max;inp.power=Math.max(.02,chipPhys(G.club,yd));inp.chipYds=yd}return _executeShotC(inp)};
 function chipPhysForRing(){if(!chipOn())return null;const mp=G.club===G.rec.ci?G.rec.pw:chipMeterPw();return chipPhys(G.club,mp*G.chip.max)}
 /* keep the left panel, club rail and recommendation in sync whenever the ball is moved while at address */
 const _setAddressK=setAddress;setAddress=function(){const r=_setAddressK.apply(this,arguments);const b=G.ball;if(b)G._addrKey=b.x.toFixed(2)+','+b.y.toFixed(2)+','+(G.H&&G.H.hi)+','+(G.H&&G.H.course&&G.H.course.id);return r};
@@ -5485,6 +5509,17 @@ function gfxInit(tries){
   catch(e){try{gfxSafeLow(e)}catch(_){}}}
 window.GFX=GFX;window.gfxSet=gfxSet;window.gfxApply=gfxApply;window.gfxCycle=gfxCycle;window.gfxFpsSet=gfxFpsSet;window.showOptions=showOptions;
 gfxInit(0);
+/* v1.14.2: map chip meter yards from raw meter power (before gear/build wrappers) using the player's actual distances */
+{const _chipOut=executeShot;executeShot=function(inp){
+  if(inp&&typeof chipOn==='function'&&chipOn()&&Number.isFinite(inp.power)&&!inp.chipYds){
+    inp=Object.assign({},inp);
+    const yd=clamp(inp.power,0,1.15)*G.chip.max;
+    inp.power=Math.max(.02,chipPhys(G.club,yd));
+    inp.chipYds=yd;
+  }
+  return _chipOut.apply(this,arguments);
+}}
+
 
 </script>
 <script>(function(){function boot(){var s=document.createElement('script');s.text=document.getElementById('gsrc').textContent;document.body.appendChild(s)}boot()})()
