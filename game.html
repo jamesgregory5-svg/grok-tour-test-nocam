@@ -250,7 +250,7 @@ html,body,button,input,select,textarea{font-family:Outfit,"Helvetica Neue",syste
 <div id="ldr" style="position:fixed;inset:0;z-index:9999;background:#0b1014;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#e8eef2;font:700 28px/1 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.18em;transition:opacity .6s ease"><div>LOADING</div><div style="width:min(420px,70vw)"><div style="height:10px;background:#1a2430;border-radius:999px;overflow:hidden;border:1px solid #2a3a44"><div id="ldrBar" style="height:100%;width:0%;background:linear-gradient(90deg,#3fe0b0,#7cf0d0);border-radius:999px;box-sizing:border-box;transition:none"></div></div><div id="ldrPct" style="margin-top:8px;text-align:center;font:800 14px/1.2 system-ui,sans-serif;letter-spacing:.12em;opacity:.85">0%</div></div></div><div id="fps"></div><div id="gimme"><div class="gb"><b>GIMME</b><span id="gimmeS"></span></div></div>
 <script type="text/x-tour" id="gsrc">
 'use strict';
-const VERSION='v1.14.2';
+const VERSION='v1.14.3';
 const TAU=Math.PI*2,DEG=Math.PI/180;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,smooth=t=>t*t*(3-2*t);
 const pad=n=>String(n).padStart(2,'0');
@@ -1063,6 +1063,7 @@ function mkGL(canvas){
   const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(o)+'\n'+s.split('\n').map((l,i)=>(i+1)+': '+l).join('\n'));return o};
   const prog=(vs,fs)=>{const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,'#version 300 es\nprecision highp float;\n'+vs));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,'#version 300 es\nprecision highp float;\n'+fs));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));
     const u={};const n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS);for(let i=0;i<n;i++){const a=gl.getActiveUniform(p,i);u[a.name.replace('[0]','')]=gl.getUniformLocation(p,a.name)}return{p,u}};
+  R.prog=prog;
   // ---------- programs ----------
   R.pTer=prog(`
 layout(location=0) in vec3 aP;layout(location=1) in vec3 aN;uniform mat4 uVP;uniform vec4 uReg;uniform float uOuter;uniform sampler2D uMask;
@@ -1624,6 +1625,7 @@ function simShot(ci,power,surf,wind,shape,traj,dir,x,y){
   if(typeof playerPowScale==='function')inp.power=power*playerPowScale(ci);
   if(typeof playerLaunchIn==='function')inp=playerLaunchIn(ci,inp);
   const L=launchFrom(ci,inp,surf);const F=flyBall(L,x,y,dir,wind,SIMBUF);return{L,F}}
+const carryCache={};
 function clubCarry(ci,power,surf,wind,dir){const sc=typeof playerPowScale==='function'?playerPowScale(ci):1;const k=ci+'|'+power.toFixed(2)+'|'+surf+'|'+wind.x.toFixed(1)+'|'+wind.y.toFixed(1)+'|'+dir.toFixed(2)+'|'+sc.toFixed(4);if(carryCache[k])return carryCache[k];
   const r=simShot(ci,power,surf,wind,0,0,dir,0,0);const F=r.F;const along=F.lx*Math.cos(dir)+F.ly*Math.sin(dir);const g=Math.max(.04,Math.min(1,1-(F.desc-25)/28))*(1-Math.min(.6,F.wb/RPM/20000));
   const rr=groundRoll(Object.assign({},F),()=>S_FW,()=>({x:0,y:0}),null,null);const roll=Math.hypot(rr.x-F.lx,rr.y-F.ly);return carryCache[k]={carry:along,total:along+roll,F}}
@@ -1681,7 +1683,7 @@ function setAddress(fromShot){
   const b=G.ball;b.surf=G.H.surfAt(b.x,b.y);G.phase=b.surf===S_GREEN?'putt':'address';
   recommend();G.club=G.rec.ci;if(G.phase==='putt')G.club=PUTTER;else if(G.club===PUTTER){if(b.surf===S_FRINGE||b.surf===S_FW)G.phase='putt';else{G.club=9}}// putter off the green = putt mode (never a full swing with the putter)
   defaultAim();G.puttFt=0;G.sw=null;
-  const pc=G.cam;G.cam=null;updClubs();updHUD();if(G.phase==='putt')G.view=0;camSnap();camBlendFrom(pc)}
+  const pc=G.cam;updClubs();updHUD();if(G.phase==='putt')G.view=0;try{camSnap()}catch(e){try{console.warn('camSnap',e)}catch(_){}try{G.cam=camAddress()}catch(_){}}if(!G.cam)G.cam=pc||{eye:[0,0,40],at:[0,1,0],fov:.85};try{camBlendFrom(pc)}catch(e){}}
 function afterLoad(){setAddress()}
 // ---------- swing ----------
 function shotPower(){return G.sw?G.sw.pow:0}
@@ -1821,7 +1823,7 @@ function endIntro(){$('intro').classList.remove('on');$('hud').classList.remove(
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 // ---------- frame loop ----------
 const PERF={ft:[],js:[],n:0,acc:0,lowAt:0};
-function frame(now){requestAnimationFrame(frame);if(G.cartOn)return;const _t0=performance.now();
+function frame(now){requestAnimationFrame(frame);if(G.cartOn)return;try{const _t0=performance.now();
   const dt=Math.min(.05,(now-(G.last||now))/1000)*(G.ts||1);G.last=now;G.time+=dt;
   PERF.ft.push(dt*1000);if(PERF.ft.length>240)PERF.ft.shift();
   if(!G.H||G.mode==='menu'&&!G.bg){return}
@@ -1836,7 +1838,7 @@ function frame(now){requestAnimationFrame(frame);if(G.cartOn)return;const _t0=pe
   if(G.phase==='replay')replayTick(dt);
   splashTick(dt);
   updCam(dt);
-  {const hv=(G.phase==='address'||G.phase==='swing')&&swingHintOn()?1:0;const he=$('hint');if(he.style.opacity!=hv)he.style.opacity=hv;const fl=G.phase==='flight'||G.phase==='rest'||G.phase==='holed'||G.phase==='replay';const hu=$('hud');if(hu.classList.contains('fly')!==fl)hu.classList.toggle('fly',fl)}
+  {const hv=(G.phase==='address'||G.phase==='swing')&&swingHintOn()?1:0;const he=$('hint');if(he&&he.style.opacity!=hv)he.style.opacity=hv;const fl=G.phase==='flight'||G.phase==='rest'||G.phase==='holed'||G.phase==='replay';const hu=$('hud');if(hu.classList.contains('fly')!==fl)hu.classList.toggle('fly',fl)}
   // compose scene
   const S={teeMarks:G.mode==='round'?G.teeMarks:null,time:G.time,cup:G.cupOn===false?null:G.H.cup,flags:(typeof pinHidden==='function'&&pinHidden())?[]:G.flags,ball:{x:0,y:0},ballShadow:0,ballOn:G.ballOn!==false,putt:0,extraBalls:G.extraBalls};
   let bp;if((G.phase==='flight'||G.phase==='rest'||G.phase==='holed'||G.phase==='replay')&&G.anim){bp=ballAt(G.anim,G.anim.t)}else{const b=G.ball;bp=[b.x,b.y,G.H.hAt(b.x,b.y)]}
@@ -1859,6 +1861,7 @@ function frame(now){requestAnimationFrame(frame);if(G.cartOn)return;const _t0=pe
     const base=G.scaleBase||G.scale,floor=Math.max(1,base*.75);if(G.holeAt===undefined)G.holeAt=now;
     if(now-G.holeAt>4000&&avg>24&&G.scale>floor&&now-PERF.lowAt>3000){G.scale=Math.max(floor,G.scale*.9);PERF.lowAt=now}
     else if(avg<14&&G.scale<base&&now-PERF.lowAt>5000){G.scale=Math.min(base,G.scale*1.1);PERF.lowAt=now}}}
+  catch(e){try{console.warn('frame',e)}catch(_){}try{drawMeter()}catch(_){}}}
 function resize(){const c=G.R.canvas,s=G.scale||1;const w=Math.round(innerWidth*s),h=Math.round(innerHeight*s);if(c.width!==w||c.height!==h){c.width=w;c.height=h}}
 function nextAddress(){if(G.phase==='holed')return;if(G.mode==='round'){if(G.strokes>=G.H.par+5&&G.phase!=='holed'){pickUp();return}saveRound()}setAddress()}
 // ---------- landing ring ----------
@@ -2041,7 +2044,7 @@ function loadRoundHole(rs){const r=G.round,c=CID[r.cid],idx=r.start+r.i;hideScre
   G.onHoled=()=>holed();
   if(rs){G.ball=rs.ball;G.strokes=rs.strokes;G.pen=rs.pen;G.putts=rs.putts;G.hs=rs.hs;G.lm=rs.lm;G.ballOn=true;setAddress()}else startIntro();
   updHUD()}
-function carryReset(){for(const k in carryCache)delete carryCache[k]}
+function carryReset(){if(typeof carryCache!=='object'||!carryCache)return;for(const k in carryCache)delete carryCache[k]}
 function noteDrive(d){const R=recLoad();const c=crec(R,G.round.cid);if(d>c.ld)c.ld=d;if(d>R.stats.longest)R.stats.longest=d;recSave(R)}
 const SNAME={'-4':'Condor','-3':'Albatross','-2':'Eagle','-1':'Birdie','0':'Par','1':'Bogey','2':'Double Bogey','3':'Triple Bogey'};
 function holed(){const r=G.round,H=G.H;const sc=G.strokes,d=sc-H.par;sfx('cup');
