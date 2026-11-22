@@ -250,7 +250,7 @@ html,body,button,input,select,textarea{font-family:Outfit,"Helvetica Neue",syste
 <div id="ldr" style="position:fixed;inset:0;z-index:9999;background:#0b1014;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#e8eef2;font:700 28px/1 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.18em;transition:opacity .6s ease"><div>LOADING</div><div style="width:min(420px,70vw)"><div style="height:10px;background:#1a2430;border-radius:999px;overflow:hidden;border:1px solid #2a3a44"><div id="ldrBar" style="height:100%;width:0%;background:linear-gradient(90deg,#3fe0b0,#7cf0d0);border-radius:999px;box-sizing:border-box;transition:none"></div></div><div id="ldrPct" style="margin-top:8px;text-align:center;font:800 14px/1.2 system-ui,sans-serif;letter-spacing:.12em;opacity:.85">0%</div></div></div><div id="fps"></div><div id="gimme"><div class="gb"><b>GIMME</b><span id="gimmeS"></span></div></div>
 <script type="text/x-tour" id="gsrc">
 'use strict';
-const VERSION='v1.14';
+const VERSION='v1.14.1-hotfix';
 const TAU=Math.PI*2,DEG=Math.PI/180;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,smooth=t=>t*t*(3-2*t);
 const pad=n=>String(n).padStart(2,'0');
@@ -2209,8 +2209,8 @@ function ldDone(T){const best=Math.max(0,...G.ldRes);const R=recLoad();const k=t
 function menuBG(){const c=CID['augusta'];if(!G.bgH){G.bgH=buildHole(c,GEO.augusta,11,0,{cupSeed:'menu'})}G.round=null;setHole(G.bgH);G.flags=[{x:G.bgH.cup.x,y:G.bgH.cup.y}];G.ball={x:0,y:0,surf:S_TEE};G.bg=true;G.phase='menu';G.R.tracerN=0;G.extraBalls=null;G.cupOn=true;G.ballOn=false}
 function menuCam(dt){const H=G.H,c=H.cup;const a=G.time*.05;const r=150;const ex=c.x+Math.cos(a-1.9)*r,ey=c.y+Math.sin(a-1.9)*r;G.cam={eye:[ex,ey,H.hAt(clamp(ex,H.X0,H.X1),clamp(ey,H.Y0,H.Y1))+22],at:[c.x,c.y,2],fov:.75}}
 function init(){
-  const cv=$('gl');const R=mkGL(cv);if(!R){document.body.insertAdjacentHTML('beforeend','<div class="screen on"><div class="pn">WebGL2 is required. Try a recent Chrome, Edge, Safari or Firefox.</div></div>');return}
-  G.R=R;const mob=Math.min(innerWidth,innerHeight)<700;G.scale=Math.min(devicePixelRatio||1,mob?1.6:2);G.scaleBase=G.scale;G.PXmax=mob?4:8;
+  const cv=$('gl');let R=null;try{R=mkGL(cv)}catch(e){try{console.error('WebGL init',e)}catch(_){}R=null}if(!R){document.body.insertAdjacentHTML('beforeend','<div class="screen on"><div class="pn">WebGL2 is required. Try a recent Chrome, Edge, Safari or Firefox.</div></div>');return}
+  G.R=R;try{if(typeof gfxHookCtx==='function')gfxHookCtx(R)}catch(e){}const mob=Math.min(innerWidth,innerHeight)<700;G.scale=Math.min(devicePixelRatio||1,mob?1.6:2);G.scaleBase=G.scale;G.PXmax=mob?4:8;
   inputInit();fillLM();menuBG();showMenu();requestAnimationFrame(frame)}
 const _updCam=updCam;updCam=function(dt){if(G.mode==='menu'){menuCam(dt);return}_updCam(dt)};
 /* v1.25: loading screen until the game is ready, then fade out */
@@ -5207,7 +5207,7 @@ const GFX={
     low:   {px:3,pr:1,tstep:1.65,sh:0,soft:0,t3:0,treeMul:.42,grass:0,grassN:0,grassR:40,grassH:0,stripe:0,sheen:0,sway:0,wat:0,refl:0,dist:280,wave:0,hemi:0,fog:.35,msaa:0,bloom:0,grade:0,splashN:24,splashV:.7,splashR:.7,tlod:1,tnear:80,simple:1},
     medium:{px:5,pr:1.25,tstep:1.2,sh:1,soft:1,t3:.7,treeMul:.8,grass:0,grassN:0,grassR:50,grassH:0,stripe:1,sheen:.45,sway:0,wat:.65,refl:0,dist:420,wave:.55,hemi:.4,fog:.7,msaa:2,bloom:0,grade:0,splashN:36,splashV:.9,splashR:.9,tlod:1,tnear:110,simple:0},
     high:  {px:7,pr:1.75,tstep:1,sh:1,soft:.45,t3:1,treeMul:1,grass:1,grassN:1400,grassR:55,grassH:1,stripe:1,sheen:.85,sway:.85,wat:1,refl:.7,dist:560,wave:1,hemi:.85,fog:1,msaa:4,bloom:.28,grade:.25,splashN:56,splashV:1.15,splashR:1.2,tlod:1,tnear:140,simple:0},
-    ultra: {px:10,pr:3,tstep:1,sh:1,soft:.3,t3:1.35,treeMul:1,grass:1,grassN:2600,grassR:70,grassH:1.2,stripe:1,sheen:1,sway:1,wat:1,refl:1,dist:720,wave:1,hemi:1,fog:1.15,msaa:8,bloom:.4,grade:.55,splashN:80,splashV:1.4,splashR:1.4,tlod:1,tnear:180,simple:0}
+    ultra: {px:10,pr:3,tstep:1,sh:1,soft:.3,t3:1.35,treeMul:1,grass:1,grassN:2600,grassR:70,grassH:1.2,stripe:1,sheen:1,sway:1,wat:1,refl:1,dist:720,wave:1,hemi:1,fog:1.15,msaa:4,bloom:.4,grade:.55,splashN:80,splashV:1.4,splashR:1.4,tlod:1,tnear:180,simple:0}
   }
 };
 GFX.P=GFX.PRE.high;
@@ -5231,7 +5231,7 @@ function gfxApply(lvl,rebuild){
   const P=GFX.PRE[lvl]||GFX.PRE.high;GFX.lvl=GFX.PRE[lvl]?lvl:'high';GFX.P=P;
   GFX.q4=new Float32Array([P.stripe,P.sheen,P.sway,P.wat]);GFX.q42=new Float32Array([P.refl,P.dist/700,P.wave,P.hemi]);
   GFX.fog=P.fog;GFX.splashN=P.splashN;GFX.splashV=P.splashV;GFX.splashR=P.splashR;
-  GQS.sh=P.sh;GQS.soft=P.soft;
+  try{if(typeof GQS!=='undefined'){GQS.sh=P.sh;GQS.soft=P.soft}}catch(e){}
   const mob=gfxMob();G.scaleBase=Math.max(.5,Math.min(devicePixelRatio||1,P.pr,mob?1.6:2.5));if(!(G.scale>0)||Math.abs(G.scale-G.scaleBase)>.001)G.scale=G.scaleBase;
   G.PXmax=mob?Math.min(4,P.px):P.px;
   T3R=150*P.t3;if(G.R)G.R.t3key=null;
@@ -5322,15 +5322,31 @@ function gfxGrass(R,common,cam,VP,S){const gl=R.gl,P=GFX.P,h=R.hole;if(!h||!h.hg
 function gfxFree(R){const gl=R.gl,F=R.gfxF;if(!F)return;try{for(const k of['col','dep'])gl.deleteRenderbuffer(F[k]);for(const k of['tex','bt1','bt2'])gl.deleteTexture(F[k]);for(const k of['fbMS','fbR','fb1','fb2'])gl.deleteFramebuffer(F[k])}catch(e){}R.gfxF=null}
 function gfxTexFB(gl,w,h){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
   const f=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,f);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,t,0);return[t,f]}
-function gfxFBO(R,w,h,ms){const gl=R.gl;let F=R.gfxF;ms=Math.min(ms,gl.getParameter(gl.MAX_SAMPLES));if(F&&F.w===w&&F.h===h&&F.ms===ms)return F;gfxFree(R);
-  F={w,h,ms};F.col=gl.createRenderbuffer();gl.bindRenderbuffer(gl.RENDERBUFFER,F.col);gl.renderbufferStorageMultisample(gl.RENDERBUFFER,ms,gl.RGBA8,w,h);
-  F.dep=gl.createRenderbuffer();gl.bindRenderbuffer(gl.RENDERBUFFER,F.dep);gl.renderbufferStorageMultisample(gl.RENDERBUFFER,ms,gl.DEPTH_COMPONENT24,w,h);
-  F.fbMS=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,F.fbMS);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.RENDERBUFFER,F.col);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,F.dep);
-  const ok1=gl.checkFramebufferStatus(gl.FRAMEBUFFER)===gl.FRAMEBUFFER_COMPLETE;
-  [F.tex,F.fbR]=gfxTexFB(gl,w,h);F.bw=Math.max(2,w>>2);F.bh=Math.max(2,h>>2);[F.bt1,F.fb1]=gfxTexFB(gl,F.bw,F.bh);[F.bt2,F.fb2]=gfxTexFB(gl,F.bw,F.bh);
-  const ok2=gl.checkFramebufferStatus(gl.FRAMEBUFFER)===gl.FRAMEBUFFER_COMPLETE;gl.bindFramebuffer(gl.FRAMEBUFFER,null);
-  if(!ok1||!ok2){gfxFree(R);return null}R.gfxF=F;return F}
-function gfxPostInit(R){if(R.gfxP)return R.gfxP;const gl=R.gl;const vs=`layout(location=0) in vec2 aP;out vec2 vU;void main(){vU=aP*.5+.5;gl_Position=vec4(aP,0.,1.);}`;
+function gfxFBO(R,w,h,ms){const gl=R.gl;let maxS=0;try{maxS=gl.getParameter(gl.MAX_SAMPLES)||0}catch(e){maxS=0}
+  ms=Math.max(0,Math.min(ms||0,4,maxS));
+  let F=R.gfxF;if(F&&F.w===w&&F.h===h&&F.ms===ms)return F;gfxFree(R);
+  function make(samples,depthFmt){
+    const Fb={w,h,ms:samples};
+    try{
+      [Fb.tex,Fb.fbR]=gfxTexFB(gl,w,h);Fb.bw=Math.max(2,w>>2);Fb.bh=Math.max(2,h>>2);[Fb.bt1,Fb.fb1]=gfxTexFB(gl,Fb.bw,Fb.bh);[Fb.bt2,Fb.fb2]=gfxTexFB(gl,Fb.bw,Fb.bh);
+      if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)return null;
+      if(samples>0){
+        Fb.col=gl.createRenderbuffer();gl.bindRenderbuffer(gl.RENDERBUFFER,Fb.col);gl.renderbufferStorageMultisample(gl.RENDERBUFFER,samples,gl.RGBA8,w,h);
+        Fb.dep=gl.createRenderbuffer();gl.bindRenderbuffer(gl.RENDERBUFFER,Fb.dep);gl.renderbufferStorageMultisample(gl.RENDERBUFFER,samples,depthFmt,w,h);
+        Fb.fbMS=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,Fb.fbMS);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.RENDERBUFFER,Fb.col);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,Fb.dep);
+        if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)return null;
+      }else Fb.fbMS=null;
+      gl.bindFramebuffer(gl.FRAMEBUFFER,null);return Fb;
+    }catch(e){try{gl.bindFramebuffer(gl.FRAMEBUFFER,null)}catch(_){}return null}
+  }
+  F=ms>0?make(ms,gl.DEPTH_COMPONENT24):null;
+  if(!F&&ms>0)F=make(ms,gl.DEPTH_COMPONENT16);
+  if(!F&&ms>2)F=make(2,gl.DEPTH_COMPONENT16);
+  if(!F)F=make(0,0);
+  if(!F)return null;R.gfxF=F;return F}
+function gfxPostInit(R){if(R.gfxP)return R.gfxP;if(!R||!R.prog)return null;
+  try{
+  const gl=R.gl;const vs=`layout(location=0) in vec2 aP;out vec2 vU;void main(){vU=aP*.5+.5;gl_Position=vec4(aP,0.,1.);}`;
   const P={};
   P.bright=R.prog(vs,`in vec2 vU;out vec4 o;uniform sampler2D uS;uniform vec2 uPx;
 void main(){vec3 c=(texture(uS,vU+uPx*vec2(-1.,-1.)).rgb+texture(uS,vU+uPx*vec2(1.,-1.)).rgb+texture(uS,vU+uPx*vec2(-1.,1.)).rgb+texture(uS,vU+uPx*vec2(1.,1.)).rgb)*.25;
@@ -5342,10 +5358,10 @@ void main(){vec3 c=texture(uS,vU).rgb;c+=texture(uB,vU).rgb*uP.x*1.5;float g=uP.
  float l=dot(c,vec3(.299,.587,.114));c=mix(vec3(l),c,1.+.16*g);c=mix(c,c*c*(3.-2.*c),.24*g);c*=mix(vec3(1.),vec3(1.05,1.,.92),g);
  vec2 q=vU-.5;q.x*=uP.w;float vg=smoothstep(.95,.28,length(q));c*=mix(1.,mix(.82,1.,vg),g);
  c+=(fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233))+uP.z)*43758.5453)-.5)/255.;o=vec4(c,1.);}`);
-  R.gfxP=P;return P}
-function gfxPost(R,F,w,h){const gl=R.gl,P=GFX.P,pp=gfxPostInit(R);
+  R.gfxP=P;return P}catch(e){try{console.warn('post shaders',e)}catch(_){}GFX.postBad=1;return null}}
+function gfxPost(R,F,w,h){const gl=R.gl,P=GFX.P,pp=gfxPostInit(R);if(!pp||!F)throw new Error('post unavailable');
   gl.disable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.disable(gl.BLEND);gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);
-  gl.bindFramebuffer(gl.READ_FRAMEBUFFER,F.fbMS);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,F.fbR);gl.blitFramebuffer(0,0,w,h,0,0,w,h,gl.COLOR_BUFFER_BIT,gl.NEAREST);
+  if(F.ms>0&&F.fbMS){gl.bindFramebuffer(gl.READ_FRAMEBUFFER,F.fbMS);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,F.fbR);gl.blitFramebuffer(0,0,w,h,0,0,w,h,gl.COLOR_BUFFER_BIT,gl.NEAREST)}
   gl.bindVertexArray(R.sky.v);gl.activeTexture(gl.TEXTURE0);
   if(P.bloom>0){
     gl.bindFramebuffer(gl.FRAMEBUFFER,F.fb1);gl.viewport(0,0,F.bw,F.bh);gl.useProgram(pp.bright.p);gl.bindTexture(gl.TEXTURE_2D,F.tex);gl.uniform1i(pp.bright.u.uS,0);gl.uniform2f(pp.bright.u.uPx,1/w,1/h);gl.drawArrays(gl.TRIANGLES,0,3);
@@ -5356,12 +5372,46 @@ function gfxPost(R,F,w,h){const gl=R.gl,P=GFX.P,pp=gfxPostInit(R);
   gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,P.bloom>0?F.bt1:F.tex);gl.uniform1i(pp.fin.u.uB,1);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,F.tex);gl.uniform1i(pp.fin.u.uS,0);
   gl.uniform4f(pp.fin.u.uP,P.bloom,P.grade,(performance.now()%1000)*.01,w/h);gl.drawArrays(gl.TRIANGLES,0,3);
   gl.bindVertexArray(null);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE)}
+function gfxSafeLow(why){
+  if(GFX.dropping)return;GFX.dropping=1;
+  GFX.postBad=1;GFX.forceDirect=1;GFX.auto=null;GFX.q='low';
+  try{console.warn('Tour Sim: dropping to Low graphics',why||'')}catch(_){}
+  try{if(G&&G.R&&G.R.gl)G.R.gl.bindFramebuffer(G.R.gl.FRAMEBUFFER,null)}catch(_){}
+  try{gfxApply('low',false);gfxSave()}catch(_){}
+  setTimeout(()=>{GFX.dropping=0},1000)}
+function gfxHookCtx(R){
+  const cv=R&&R.canvas;if(!cv||cv._gfxHook)return;cv._gfxHook=1;
+  cv.addEventListener('webglcontextlost',ev=>{
+    try{ev.preventDefault()}catch(_){}
+    GFX.lost=1;GFX.postBad=1;GFX.forceDirect=1;
+    try{gfxSafeLow('contextlost')}catch(_){}
+  });
+  cv.addEventListener('webglcontextrestored',()=>{
+    GFX.lost=0;
+    try{location.reload()}catch(_){}
+  });
+}
 {const _gdG=glDraw;glDraw=function(R,cam,S){
-  gfxFrame();const P=GFX.P;
-  if(!(P.msaa>0||P.bloom>0||P.grade>0)||GFX.postBad||!R.prog||GFX.forceDirect){GFX.mode='direct';return _gdG(R,cam,S)}
-  const cv=R.canvas,w=cv.width,h=cv.height;let F=null;try{F=gfxFBO(R,w,h,Math.max(P.msaa,2))}catch(e){console.warn('post off',e)}
-  if(!F){GFX.postBad=1;GFX.mode='direct';return _gdG(R,cam,S)}
-  R.gl.bindFramebuffer(R.gl.FRAMEBUFFER,F.fbMS);const VP=_gdG(R,cam,S);gfxPost(R,F,w,h);GFX.mode='post';return VP}}
+  try{gfxFrame()}catch(e){try{console.warn('gfxFrame',e)}catch(_){}}
+  const P=GFX.P||GFX.PRE.low;
+  const skip=!R||!R.gl||GFX.lost||GFX.postBad||GFX.forceDirect||!R.prog||!(P&&(P.msaa>0||P.bloom>0||P.grade>0));
+  if(skip){GFX.mode='direct';try{return _gdG(R,cam,S)}catch(e){try{gfxSafeLow(e)}catch(_){}return null}}
+  const gl=R.gl,w=R.canvas.width,h=R.canvas.height;let F=null;
+  try{F=gfxFBO(R,w,h,P.msaa>0?P.msaa:0)}catch(e){try{console.warn('post off',e)}catch(_){}}
+  if(!F){GFX.postBad=1;GFX.mode='direct';try{gl.bindFramebuffer(gl.FRAMEBUFFER,null)}catch(_){}try{return _gdG(R,cam,S)}catch(e){try{gfxSafeLow(e)}catch(_){}return null}}
+  try{
+    gl.bindFramebuffer(gl.FRAMEBUFFER,F.ms>0?F.fbMS:F.fbR);
+    const VP=_gdG(R,cam,S);
+    gfxPost(R,F,w,h);
+    GFX.mode='post';
+    return VP;
+  }catch(e){
+    try{gl.bindFramebuffer(gl.FRAMEBUFFER,null)}catch(_){}
+    try{gfxSafeLow(e)}catch(_){}
+    GFX.mode='direct';
+    try{return _gdG(R,cam,S)}catch(_){return null}
+  }
+}}
 /* ---- frame timing, Auto preset, FPS counter ---- */
 function gfxMed(a){const b=a.slice().sort((x,y)=>x-y);return b[b.length>>1]}
 function gfxTrim(a){const b=a.slice().sort((x,y)=>x-y);const n=Math.max(1,Math.floor(b.length*.9));let s=0;for(let i=0;i<n;i++)s+=b[i];return s/n}
@@ -5390,7 +5440,7 @@ function gfxFrame(){const now=performance.now();const dt=GFX.last?now-GFX.last:0
   A.w.push(dt);if(A.w.length<60)return;const w=A.w;A.w=[];if(Math.max(...w)>150||document.hidden||G.phase==='replay'||now-(G.holeAt||0)<3500||G.mode==='menu')return;
   const fps=1000/(w.reduce((x,y)=>x+y,0)/w.length);
   if(fps<GFX.dipFps){if(++A.bad>=3&&now-A.lastDown>6000){const i=GFX_NAMES.indexOf(GFX.lvl);if(i>1){A.lastDown=now;A.bad=0;GFX.stepDowns++;gfxApply(GFX_NAMES[i-1],false);G.holeAt=G.holeAt}}}else A.bad=0}
-function gfxAutoStart(){const o=gfxStore();const start=GFX.PRE[o.auto]?o.auto:'high';GFX.auto={done:false,st:'warm',n:0,s:[],w:[],bad:0,lastDown:0,lvl:start,best:null,res:{}};gfxApply(start,false)}
+function gfxAutoStart(){const o=gfxStore();let start=GFX.PRE[o.auto]?o.auto:'medium';if(start==='high'||start==='ultra')start='medium';GFX.auto={done:false,st:'warm',n:0,s:[],w:[],bad:0,lastDown:0,lvl:start,best:null,res:{}};try{gfxApply(start,false)}catch(e){try{gfxSafeLow('auto-start')}catch(_){}}}
 function gfxSet(q,noSave){if(!GFX_NAMES.includes(q))q='auto';GFX.q=q;
   if(q==='auto')gfxAutoStart();else{GFX.auto=null;gfxApply(q,true)}
   if(!noSave)gfxSave();gfxFpsLabel(true)}
@@ -5428,10 +5478,11 @@ addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const t=
   else if(e.key==='g'||e.key==='G'){const q=gfxCycle();try{const el=GFX.el;if(el){el.dataset.t=Date.now();el.style.display='block';el.textContent='Graphics: '+GFX_LABEL[q]+(q==='auto'?' (benchmarking)':'');clearTimeout(GFX.tmr);GFX.tmr=setTimeout(()=>gfxFpsLabel(true),1600)}}catch(_){}}});
 function gfxInit(tries){
   if(!G.R||!G.R.gl){if(tries<200)setTimeout(()=>gfxInit(tries+1),100);return}
+  try{gfxHookCtx(G.R)}catch(e){}
   let el=$('gfps');if(!el){el=document.createElement('div');el.id='gfps';el.style.cssText="position:fixed;left:max(10px,env(safe-area-inset-left));top:calc(10px + env(safe-area-inset-top));z-index:30;pointer-events:none;display:none;font:600 12px/1 Outfit,system-ui,monospace;letter-spacing:.02em;color:#fff;background:rgba(8,14,18,.62);padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);font-variant-numeric:tabular-nums";document.body.appendChild(el)}GFX.el=el;
   const o=gfxStore();GFX.fps=!!o.fps;GFX.q=GFX_NAMES.includes(o.q)?o.q:'auto';
-  if(GFX.q==='auto')gfxAutoStart();else gfxApply(GFX.q,false);
-  gfxRebuild();gfxFpsLabel(true)}
+  try{if(GFX.q==='auto')gfxAutoStart();else gfxApply(GFX.q,false);gfxRebuild();gfxFpsLabel(true)}
+  catch(e){try{gfxSafeLow(e)}catch(_){}}}
 window.GFX=GFX;window.gfxSet=gfxSet;window.gfxApply=gfxApply;window.gfxCycle=gfxCycle;window.gfxFpsSet=gfxFpsSet;window.showOptions=showOptions;
 gfxInit(0);
 
